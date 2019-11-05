@@ -1,7 +1,23 @@
 import time
 import pyautogui
 
-#Courtesy of: https://towardsdatascience.com/creating-ai-for-gameboy-part-1-coding-a-controller-5eb782f54ede
+# Courtesy of: https://towardsdatascience.com/creating-ai-for-gameboy-part-1-coding-a-controller-5eb782f54ede
+
+
+def take_action(action):
+    # X=A, Z=B (rotates)
+    action_space = ['X', 'Z', 'RIGHT', 'LEFT', 'DOWN']
+    if action == action_space[0]:
+        pyautogui.keyDown('x')
+    if action == action_space[1]:
+        pyautogui.keyDown('z')
+    if action == action_space[2]:
+        pyautogui.keyDown('right')
+    if action == action_space[3]:
+        pyautogui.keyDown('left')
+    if action == action_space[4]:
+        pyautogui.keyDown('down')
+
 
 def press_key(key, n_times = 1):
     for _ in range(n_times):

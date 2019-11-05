@@ -3,65 +3,14 @@
 # https://github.com/aaronfrederick/Fire-Emblem-AI
 import time
 import timeit
-
 import cv2
 import numpy as np
 import pytesseract as pytesseract
 import matplotlib.pyplot as plt
-
-def subscreen(x0,y0,x1,y1, screen):
-    sub_img = []
-    for i in range(y0,y1,1):
-        row=[]
-        for j in range(x0,x1,1):
-            row.append(screen[i][j])
-        sub_img.append(np.array(row))
-    sub_img = np.array(sub_img)
-    return sub_img
-
 import PIL.ImageGrab
 import PIL.ImageOps
 
-print("2")
-time.sleep(1)
-print("1")
-time.sleep(1)
-print("0")
-image = PIL.ImageGrab.grab(bbox=(20,110,640,580))
-#takes ~45ms
-
-stats = [(640-20), (580-110)]
-print(stats)
-
-#cropped = image.crop((460, 122, 585, 145))
-cropped = image.crop((460, 122, 585, 145))
-#cropped.show()
-stats = [(585-460), (145-122)]
-print(stats)
-cropped.save('res_raw.png')
-
-#for black text
-#text = pytesseract.image_to_string(image)
-
-#https://stackoverflow.com/questions/50951955/pytesseract-tesseractnotfound-error-tesseract-is-not-installed-or-its-not-i
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
-#for white text
-#image.convert('L')
-#conv = cropped.convert('L')
-#image.show()
-invert = PIL.ImageOps.invert(cropped)
-#resize = PIL.ImageOps.scale(invert, 3)
-#text = pytesseract.image_to_string(invert, lang='eng', config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
-#text = pytesseract.image_to_string(resize, lang='eng', config="-c tessedit_char_whitelist=0123456789X")
-
-#imgArr = np.array(invert)
-#model = 'block_text_logreg.pkl'
-#block_reader = np.pickle.load(open(model, 'rb'))
-#a = int(block_reader.predict(invert).reshape(30 * 24 * 4).reshape(1, -1))[0]
-
-#cv2 comparison
-#https://docs.opencv.org/master/d4/dc6/tutorial_py_template_matching.html
+#
 
 def findNumbers(img_src, template_src):
     img_bw = cv2.imread(img_src)
@@ -96,59 +45,138 @@ class Point:
         return str(self.number) + "/" + str(self.spot)
 
 
-img_src = 'res_raw.png'
-pts0 = findNumbers(img_src, '0.png')
-pts1 = findNumbers(img_src, '1.png')
-pts2 = findNumbers(img_src, '2.png')
-pts3 = findNumbers(img_src, '3.png')
-pts4 = findNumbers(img_src, '4.png')
-pts5 = findNumbers(img_src, '5.png')
-pts6 = findNumbers(img_src, '6.png')
-pts7 = findNumbers(img_src, '7.png')
-pts8 = findNumbers(img_src, '8.png')
-pts9 = findNumbers(img_src, '9.png')
-pts = []
-for pt in pts0:
-    pts.append(Point(0, pt))
-for pt in pts1:
-    pts.append(Point(1, pt))
-for pt in pts2:
-    pts.append(Point(2, pt))
-for pt in pts3:
-    pts.append(Point(3, pt))
-for pt in pts4:
-    pts.append(Point(4, pt))
-for pt in pts5:
-    pts.append(Point(5, pt))
-for pt in pts6:
-    pts.append(Point(6, pt))
-for pt in pts7:
-    pts.append(Point(7, pt))
-for pt in pts8:
-    pts.append(Point(8, pt))
-for pt in pts9:
-    pts.append(Point(9, pt))
+def screencap(emulatorBox = [20, 11, 640, 580], scoreBox = [460, 122, 585, 145]):
+    # standard = 20, 110, 640, 580
+    tensor = []
+    image = PIL.ImageGrab.grab(bbox=(emulatorBox[0], emulatorBox[1], emulatorBox[2], emulatorBox[3]))
+    image_gray = PIL.ImageOps.grayscale(image)
+    tensor.append(np.array(image_gray))
 
-print(pts)
-pts.sort(key=lambda x: x.spot)
-print(pts)
+    time.sleep(0.5)
 
-text = ""
+    image = PIL.ImageGrab.grab(bbox=(emulatorBox[0], emulatorBox[1], emulatorBox[2], emulatorBox[3]))
+    image_gray = PIL.ImageOps.grayscale(image)
+    tensor.append(np.array(image_gray))
 
-for point in pts:
-    text += str(point.number)
+    time.sleep(0.5)
 
-#for pt in zip(*loc[::-1]):
-#    cv2.rectangle(img_bw, pt, (pt[0] + w, pt[1] + h), (0, 0, 255), 2)
-#cv2.imwrite('res.png', img_bw)
+    image = PIL.ImageGrab.grab(bbox=(emulatorBox[0], emulatorBox[1], emulatorBox[2], emulatorBox[3]))
+    image_gray = PIL.ImageOps.grayscale(image)
+    tensor.append(np.array(image_gray))
 
-print("---Text---")
-#text = pytesseract.image_to_string(invert, config="--psm 6")
-print(text)
+    time.sleep(0.5)
 
-print("---Done---")
-#invert.show()
+    image = PIL.ImageGrab.grab(bbox=(emulatorBox[0], emulatorBox[1], emulatorBox[2], emulatorBox[3]))
+    image_gray = PIL.ImageOps.grayscale(image)
+    tensor.append(np.array(image_gray))
 
-#using logistic regression model 'block_reader'
-#padder function adds black to outline if image is too small
-#stats['str'] = block_reader.predict(padder(str_img).reshape(to fit model))[0]
+    # score standard crop = 460, 122, 585, 145
+    cropped = image.crop((scoreBox[0], scoreBox[1], scoreBox[2], scoreBox[3]))  # score is here
+    crop_src = 'res_crop.png'
+    cropped.save(crop_src)
+
+    pts0 = findNumbers(crop_src, 'images/0.png')
+    pts1 = findNumbers(crop_src, 'images/1.png')
+    pts2 = findNumbers(crop_src, 'images/2.png')
+    pts3 = findNumbers(crop_src, 'images/3.png')
+    pts4 = findNumbers(crop_src, 'images/4.png')
+    pts5 = findNumbers(crop_src, 'images/5.png')
+    pts6 = findNumbers(crop_src, 'images/6.png')
+    pts7 = findNumbers(crop_src, 'images/7.png')
+    pts8 = findNumbers(crop_src, 'images/8.png')
+    pts9 = findNumbers(crop_src, 'images/9.png')
+    pts = []
+    for pt in pts0:
+        pts.append(Point(0, pt))
+    for pt in pts1:
+        pts.append(Point(1, pt))
+    for pt in pts2:
+        pts.append(Point(2, pt))
+    for pt in pts3:
+        pts.append(Point(3, pt))
+    for pt in pts4:
+        pts.append(Point(4, pt))
+    for pt in pts5:
+        pts.append(Point(5, pt))
+    for pt in pts6:
+        pts.append(Point(6, pt))
+    for pt in pts7:
+        pts.append(Point(7, pt))
+    for pt in pts8:
+        pts.append(Point(8, pt))
+    for pt in pts9:
+        pts.append(Point(9, pt))
+
+    pts.sort(key=lambda x: x.spot)
+
+    score_text = ""
+
+    for point in pts:
+        score_text += str(point.number)
+    return tensor, score_text
+
+
+def test_image():
+    print("2")
+    time.sleep(1)
+    print("1")
+    time.sleep(1)
+    print("0")
+
+    image = PIL.ImageGrab.grab(bbox=(20,110,640,580))
+    # takes ~45ms
+
+    stats = [(640-20), (580-110)]
+    print(stats)
+
+    cropped = image.crop((460, 122, 585, 145))
+    # cropped.show()
+    stats = [(585-460), (145-122)]
+    print(stats)
+    cropped.save('res_raw.png')
+
+    img_src = 'res_raw.png'
+    pts0 = findNumbers(img_src, 'images/0.png')
+    pts1 = findNumbers(img_src, 'images/1.png')
+    pts2 = findNumbers(img_src, 'images/2.png')
+    pts3 = findNumbers(img_src, 'images/3.png')
+    pts4 = findNumbers(img_src, 'images/4.png')
+    pts5 = findNumbers(img_src, 'images/5.png')
+    pts6 = findNumbers(img_src, 'images/6.png')
+    pts7 = findNumbers(img_src, 'images/7.png')
+    pts8 = findNumbers(img_src, 'images/8.png')
+    pts9 = findNumbers(img_src, 'images/9.png')
+    pts = []
+    for pt in pts0:
+        pts.append(Point(0, pt))
+    for pt in pts1:
+        pts.append(Point(1, pt))
+    for pt in pts2:
+        pts.append(Point(2, pt))
+    for pt in pts3:
+        pts.append(Point(3, pt))
+    for pt in pts4:
+        pts.append(Point(4, pt))
+    for pt in pts5:
+        pts.append(Point(5, pt))
+    for pt in pts6:
+        pts.append(Point(6, pt))
+    for pt in pts7:
+        pts.append(Point(7, pt))
+    for pt in pts8:
+        pts.append(Point(8, pt))
+    for pt in pts9:
+        pts.append(Point(9, pt))
+
+    print(pts)
+    pts.sort(key=lambda x: x.spot)
+    print(pts)
+
+    text = ""
+
+    for point in pts:
+        text += str(point.number)
+
+    print("---Text---")
+    print(text)
+    print("---Done---")
