@@ -1,3 +1,4 @@
+import math
 import time
 
 from dqn_agent import DQNAgent
@@ -8,17 +9,20 @@ import random
 from logs import CustomTensorBoard
 from tqdm import tqdm
 
+# https://github.com/nuno-faria/tetris-ai
+
 scores = []
+epsilon_stop_episode = 0
 
 # Run dqn with Tetris
 def dqn():
-    global scores
+    global scores, epsilon_stop_episode
     env = Tetris()
-    episodes = 1800
-    render_after = 1775
+    episodes = 1600
+    render_after = 1550
+    epsilon_stop_episode = 1400 #math.ceil(episodes * 0.75)
     max_steps = None
-    epsilon_stop_episode = 50
-    mem_size = 20000
+    mem_size = 10000
     discount = 0.95
     batch_size = 512
     epochs = 1
@@ -85,9 +89,14 @@ def dqn():
 
 
 if __name__ == "__main__":
+    start = time.time()
     dqn()
+    end = time.time()
     maxi_score = max(scores)
+    mean_after_epsilon = mean(scores[epsilon_stop_episode:])
     best_episode = 0
     time.sleep(0.5)
+    print("Time:", end - start, "s")
+    print("Mean:", mean_after_epsilon)
     print("best score", maxi_score)
     print("best episode", scores.index(maxi_score))
