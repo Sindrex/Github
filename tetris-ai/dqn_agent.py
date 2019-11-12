@@ -51,6 +51,7 @@ class DQNAgent:
             replay_start_size = mem_size / 2
         self.replay_start_size = replay_start_size
         self.model = self._build_model()
+        print("done construct")
 
 
     def _build_model(self):
@@ -67,6 +68,9 @@ class DQNAgent:
         
         return model
 
+    def loadModel(self, src):
+        self.model = load_model(src)
+        print("loading model")
 
     def add_to_memory(self, current_state, next_state, reward, done):
         '''Adds a play to the replay memory buffer'''
@@ -109,7 +113,6 @@ class DQNAgent:
 
         return best_state
 
-
     def train(self, batch_size=32, epochs=3):
         '''Trains the agent'''
         n = len(self.memory)
@@ -137,6 +140,7 @@ class DQNAgent:
                 y.append(new_q)
 
             # Fit the model to the given values
+            # add-> feks legge til flere
             self.model.fit(np.array(x), np.array(y), batch_size=batch_size, epochs=epochs, verbose=0)
 
             # Update the exploration variable

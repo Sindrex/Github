@@ -8,6 +8,7 @@ from statistics import mean, median
 import random
 from logs import CustomTensorBoard
 from tqdm import tqdm
+import matplotlib.pyplot as np
 
 # https://github.com/nuno-faria/tetris-ai
 
@@ -15,18 +16,18 @@ scores = []
 epsilon_stop_episode = 0
 
 # Run dqn with Tetris
-def dqn():
+def dqn(loadmodelsrc=""):
     global scores, epsilon_stop_episode
     env = Tetris()
-    episodes = 1600
-    render_after = 1550
-    epsilon_stop_episode = 1400 #math.ceil(episodes * 0.75)
+    episodes = 1000 # standard=2000~, går sakte etter 1500
+    render_after = 1
+    epsilon_stop_episode = 1 #math.ceil(episodes * 0.75)
     max_steps = None
-    mem_size = 10000
+    mem_size = 20000
     discount = 0.95
     batch_size = 512
     epochs = 1
-    render_every = 100
+    render_every = 500
     log_every = 50
     replay_start_size = 2000
     train_every = 1
@@ -34,10 +35,17 @@ def dqn():
     render_delay = None
     activations = ['relu', 'relu', 'linear']
 
-    agent = DQNAgent(env.get_state_size(),
-                     n_neurons=n_neurons, activations=activations,
-                     epsilon_stop_episode=epsilon_stop_episode, mem_size=mem_size,
-                     discount=discount, replay_start_size=replay_start_size)
+    if loadmodelsrc:
+        agent = DQNAgent(env.get_state_size(),
+                         n_neurons=n_neurons, activations=activations,
+                         epsilon_stop_episode=epsilon_stop_episode, mem_size=mem_size,
+                         discount=discount, replay_start_size=replay_start_size)
+        agent.model = agent.loadModel(loadmodelsrc)
+    else:
+        agent = DQNAgent(env.get_state_size(),
+                         n_neurons=n_neurons, activations=activations,
+                         epsilon_stop_episode=epsilon_stop_episode, mem_size=mem_size,
+                         discount=discount, replay_start_size=replay_start_size)
 
     log_dir = f'logs/tetris-nn={str(n_neurons)}-mem={mem_size}-bs={batch_size}-e={epochs}-{datetime.now().strftime("%Y%m%d-%H%M%S")}'
     log = CustomTensorBoard(log_dir=log_dir)
@@ -87,16 +95,25 @@ def dqn():
             log.log(episode, avg_score=avg_score, min_score=min_score,
                     max_score=max_score)
 
+    #agent.model.save(str(datetime.now().year) + str(datetime.now().month) + str(datetime.now().day) + str(datetime.now().hour) + ".h5")
+
+    agent.model.save(time.strftime("%Y_%m_%d_%H_%M_%S.h5"))
+
 
 if __name__ == "__main__":
-    start = time.time()
-    dqn()
-    end = time.time()
-    maxi_score = max(scores)
-    mean_after_epsilon = mean(scores[epsilon_stop_episode:])
-    best_episode = 0
-    time.sleep(0.5)
-    print("Time:", end - start, "s")
-    print("Mean:", mean_after_epsilon)
-    print("best score", maxi_score)
-    print("best episode", scores.index(maxi_score))
+    num = 1
+    for i in range(num):
+        start = time.time()
+        dqn("2019_11_12_12_21_39.h5")
+        end = time.time()
+        maxi_score = max(scores)
+        mean_after_epsilon = mean(scores[epsilon_stop_episode:])
+        best_episode = 0
+        time.sleep(1)
+        print("Run:", i)
+        print("Time:", end - start, "sec")
+        print("Mean:", mean_after_epsilon)
+        print("best score:", maxi_score)
+        print("best episode:", scores.index(maxi_score))
+        np.plot([x for x in range(len(scores))], scores)
+        np.show()
