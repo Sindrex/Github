@@ -1,4 +1,5 @@
 import math
+import pickle
 import time
 
 from dqn_agent import DQNAgent
@@ -12,16 +13,16 @@ import matplotlib.pyplot as np
 
 # https://github.com/nuno-faria/tetris-ai
 
-scores = []
+scores = [0]
 epsilon_stop_episode = 0
 
 # Run dqn with Tetris
-def dqn(loadmodelsrc=""):
+def dqn(saveAs=time.strftime("%Y_%m_%d_%H_%M_%S.h5"), loadmodelsrc="", doTrain=True, episodes=2000, render_after=1950, agent=None):
     global scores, epsilon_stop_episode
     env = Tetris()
-    episodes = 1000 # standard=2000~, går sakte etter 1500
-    render_after = 1
-    epsilon_stop_episode = 1 #math.ceil(episodes * 0.75)
+    #episodes = 2000 # standard=2000~, går sakte etter 1500
+    #render_after = 1950
+    epsilon_stop_episode = math.ceil(episodes * 0.75)
     max_steps = None
     mem_size = 20000
     discount = 0.95
@@ -50,7 +51,7 @@ def dqn(loadmodelsrc=""):
     log_dir = f'logs/tetris-nn={str(n_neurons)}-mem={mem_size}-bs={batch_size}-e={epochs}-{datetime.now().strftime("%Y%m%d-%H%M%S")}'
     log = CustomTensorBoard(log_dir=log_dir)
 
-    scores = []
+    scores = [0]
 
     for episode in tqdm(range(episodes+1)):
         current_state = env.reset()
@@ -59,6 +60,7 @@ def dqn(loadmodelsrc=""):
 
         if (render_every and episode % render_every == 0) or episode > render_after:
             render = True
+            print("Mean score this", render_every, ": ", mean(scores))
         else:
             render = False
 
@@ -83,7 +85,7 @@ def dqn(loadmodelsrc=""):
         scores.append(env.get_game_score())
 
         # Train
-        if episode % train_every == 0:
+        if episode % train_every == 0 and doTrain:
             agent.train(batch_size=batch_size, epochs=epochs)
 
         # Logs
@@ -97,16 +99,18 @@ def dqn(loadmodelsrc=""):
 
     #agent.model.save(str(datetime.now().year) + str(datetime.now().month) + str(datetime.now().day) + str(datetime.now().hour) + ".h5")
 
-    agent.model.save(time.strftime("%Y_%m_%d_%H_%M_%S.h5"))
+    if not loadmodelsrc:
+        agent.model.save(saveAs)
+        pickle.dump(agent, saveAs + ".pickle")
 
 
 if __name__ == "__main__":
     num = 1
     for i in range(num):
         start = time.time()
-        dqn("2019_11_12_12_21_39.h5")
+        dqn(saveAs="ABC.h5", episodes=1600)
         end = time.time()
-        maxi_score = max(scores)
+        maxi_score = max(scores[epsilon_stop_episode:])
         mean_after_epsilon = mean(scores[epsilon_stop_episode:])
         best_episode = 0
         time.sleep(1)
@@ -117,3 +121,6 @@ if __name__ == "__main__":
         print("best episode:", scores.index(maxi_score))
         np.plot([x for x in range(len(scores))], scores)
         np.show()
+
+        dqn(agent=pickle.load("ABC.h5.pickle"), doTrain=False, episodes=50, render_after=1)
+        #dqn(loadmodelsrc="ABC.h5", doTrain=False, episodes=50, render_after=1)
