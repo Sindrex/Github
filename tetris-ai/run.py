@@ -96,7 +96,7 @@ def dqn(saveAs="", doTrain=True, episodes=2000, render_after=10000, agent=None, 
 
 
 if __name__ == "__main__":
-    mem_sizes = [1, 1000, 10000, 25000, 50000, 75000, 100000, 1250000, 150000, 175000, 200000, 225000, 250000]
+    mem_sizes = [150000, 175000, 200000, 225000, 250000]
     all_means = []
     all_bests = []
     all_times = []
@@ -138,5 +138,5 @@ if __name__ == "__main__":
     print("means:", all_means)
     print("bests:", all_bests)
     print("times:", all_times)
-    np.plot(mem_sizes, all_means)
-    np.show()
+    plt.plot(mem_sizes, all_means)
+    plt.show()
