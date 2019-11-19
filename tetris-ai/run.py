@@ -9,7 +9,8 @@ from statistics import mean, median
 import random
 from logs import CustomTensorBoard
 from tqdm import tqdm
-import matplotlib.pyplot as np
+import matplotlib.pyplot as plt
+import numpy as np
 
 # https://github.com/nuno-faria/tetris-ai
 
@@ -17,14 +18,13 @@ scores = [0]
 epsilon_stop_episode = 0
 
 # Run dqn with Tetris
-def dqn(saveAs=time.strftime("%Y_%m_%d_%H_%M_%S.h5"), loadmodelsrc="", doTrain=True, episodes=2000, render_after=10000, agent=None):
+def dqn(saveAs="", doTrain=True, episodes=2000, render_after=10000, agent=None, mem_size=20000):
     global scores, epsilon_stop_episode
     env = Tetris()
     #episodes = 2000 # standard=2000~, går sakte etter 1500
     #render_after = 1950
     epsilon_stop_episode = math.ceil(episodes * 0.75)
     max_steps = None
-    mem_size = 20000
     discount = 0.95
     batch_size = 512
     epochs = 1
@@ -37,13 +37,6 @@ def dqn(saveAs=time.strftime("%Y_%m_%d_%H_%M_%S.h5"), loadmodelsrc="", doTrain=T
     activations = ['relu', 'relu', 'linear']
 
     if not agent:
-        if loadmodelsrc:
-            agent = DQNAgent(env.get_state_size(),
-                             n_neurons=n_neurons, activations=activations,
-                             epsilon_stop_episode=epsilon_stop_episode, mem_size=mem_size,
-                             discount=discount, replay_start_size=replay_start_size)
-            agent.model = agent.loadModel(loadmodelsrc)
-        else:
             agent = DQNAgent(env.get_state_size(),
                              n_neurons=n_neurons, activations=activations,
                              epsilon_stop_episode=epsilon_stop_episode, mem_size=mem_size,
@@ -52,7 +45,7 @@ def dqn(saveAs=time.strftime("%Y_%m_%d_%H_%M_%S.h5"), loadmodelsrc="", doTrain=T
     log_dir = f'logs/tetris-nn={str(n_neurons)}-mem={mem_size}-bs={batch_size}-e={epochs}-{datetime.now().strftime("%Y%m%d-%H%M%S")}'
     log = CustomTensorBoard(log_dir=log_dir)
 
-    scores = [0]
+    scores = []
 
     for episode in tqdm(range(episodes+1)):
         current_state = env.reset()
@@ -98,33 +91,52 @@ def dqn(saveAs=time.strftime("%Y_%m_%d_%H_%M_%S.h5"), loadmodelsrc="", doTrain=T
             log.log(episode, avg_score=avg_score, min_score=min_score,
                     max_score=max_score)
 
-    #agent.model.save(str(datetime.now().year) + str(datetime.now().month) + str(datetime.now().day) + str(datetime.now().hour) + ".h5")
-
-    if not loadmodelsrc:
-        agent.model.save(saveAs)
+    if saveAs:
         pickle.dump(agent, open(saveAs + ".pickle", "wb"))
 
 
 if __name__ == "__main__":
-    num = 1
-    for i in range(num):
+    mem_sizes = [1, 1000, 10000, 25000, 50000, 75000, 100000, 1250000, 150000, 175000, 200000, 225000, 250000]
+    all_means = []
+    all_bests = []
+    all_times = []
+    agent_name = "Agent2_"
+    mean_width = 100
+    episode_count = 2500
+    for i in range(len(mem_sizes)):
         start = time.time()
-        dqn(saveAs="ABC.h5", episodes=2500, render_after=2450)
+        dqn(saveAs=agent_name+str(mem_sizes[i]), episodes=episode_count, mem_size=mem_sizes[i])
         end = time.time()
-        maxi_score = max(scores[epsilon_stop_episode:])
-        mean_after_epsilon = mean(scores[epsilon_stop_episode:])
-        best_episode = 0
+        diff_time = end - start
+        all_times.append(diff_time)
         time.sleep(1)
-        print("Run:", i)
-        print("Time:", end - start, "sec")
-        print("Mean:", mean_after_epsilon)
-        print("best score:", maxi_score)
-        print("best episode:", scores.index(maxi_score))
-        np.plot([x for x in range(len(scores))], scores)
-        np.show()
+        plt.plot(scores) #[x for x in range(len(scores))],
+        score_local_mean = []
+        for k in range(len(scores)):
+            start = max(k-mean_width, 0)
+            end = k+mean_width
+            s = scores[start:end]
+            score_local_mean.append(sum(s)/len(s))
+        plt.plot(score_local_mean)
+        plt.savefig(agent_name+str(mem_sizes[i])+'_fig.png')
+        np.savetxt(agent_name+str(mem_sizes[i])+'_scores.txt', scores, delimiter=',')
+        plt.clf()
+        #np.show()
 
-        dqn(agent=pickle.load(open("ABC.h5.pickle", "rb")), doTrain=False, episodes=50, render_after=1)
-        maxi_score = max(scores[epsilon_stop_episode:])
-        mean_after_epsilon = mean(scores[epsilon_stop_episode:])
-        print("Mean:", mean_after_epsilon)
+        #dqn(agent=pickle.load(open(agent_name + str(mem_sizes[i]) + ".pickle", "rb")), doTrain=False, episodes=1000, mem_size=0)
+        maxi_score = max(scores)
+        mean_test = mean(scores[len(scores)-mean_width:])
+        all_means.append(mean_test)
+        all_bests.append(maxi_score)
+        print("Run:", i, ", Memory size:", mem_sizes[i])
+        print("Training Time:", diff_time, "sec")
+        print("Mean:", mean_test)
         print("best score:", maxi_score)
+        #np.plot([x for x in range(len(scores))], scores)
+        #np.show()
+
+    print("means:", all_means)
+    print("bests:", all_bests)
+    print("times:", all_times)
+    np.plot(mem_sizes, all_means)
+    np.show()
