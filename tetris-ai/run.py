@@ -96,13 +96,13 @@ def dqn(saveAs="", doTrain=True, episodes=2000, render_after=10000, agent=None, 
 
 
 if __name__ == "__main__":
-    mem_sizes = [150000, 175000, 200000, 225000, 250000]
+    mem_sizes = [50000]
     all_means = []
     all_bests = []
     all_times = []
     agent_name = "Agent2_"
     mean_width = 100
-    episode_count = 2500
+    episode_count = 4000
     for i in range(len(mem_sizes)):
         start = time.time()
         dqn(saveAs=agent_name+str(mem_sizes[i]), episodes=episode_count, mem_size=mem_sizes[i])
