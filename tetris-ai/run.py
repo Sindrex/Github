@@ -23,7 +23,7 @@ def dqn(saveAs="", doTrain=True, episodes=2000, render_after=10000, agent=None, 
     env = Tetris()
     #episodes = 2000 # standard=2000~, går sakte etter 1500
     #render_after = 1950
-    epsilon_stop_episode = math.ceil(episodes * 0.75)
+    epsilon_stop_episode = 2500 #math.ceil(episodes * 0.75)
     max_steps = None
     discount = 0.95
     batch_size = 512
@@ -100,9 +100,9 @@ if __name__ == "__main__":
     all_means = []
     all_bests = []
     all_times = []
-    agent_name = "Agent2_"
+    agent_name = "Agent2_10000_"
     mean_width = 100
-    episode_count = 4000
+    episode_count = 10000
     for i in range(len(mem_sizes)):
         start = time.time()
         dqn(saveAs=agent_name+str(mem_sizes[i]), episodes=episode_count, mem_size=mem_sizes[i])
